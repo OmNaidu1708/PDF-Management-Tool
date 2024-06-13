@@ -1,0 +1,7 @@
+streamlit
+PyPDF2
+PyMuPDF
+python-docx
+pdf2docx
+transformers
+reportlab
