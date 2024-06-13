@@ -5,9 +5,8 @@ import fitz
 from docx import Document
 from pdf2docx import Converter
 from transformers import pipeline
-from reportlab.pdfgen import canvas
 
-# Function to merge PDFs
+#merge PDFs
 def merge_pdfs(pdfs):
     merger = PdfMerger()
     for pdf in pdfs:
@@ -17,7 +16,7 @@ def merge_pdfs(pdfs):
     merger.close()
     return output
 
-# Function to convert PDF to Word
+#convert PDF to Word
 def pdf_to_word(pdf_file):
     output = "converted.docx"
     cv = Converter(pdf_file)
@@ -25,7 +24,7 @@ def pdf_to_word(pdf_file):
     cv.close()
     return output
 
-# Function to convert Word to PDF
+#Word to PDF
 def word_to_pdf(word_file):
     doc = Document(word_file)
     output = "converted.pdf"
@@ -35,7 +34,7 @@ def word_to_pdf(word_file):
     c.save()
     return output
 
-# Function to extract text from a PDF
+#extract text from a PDF
 def extract_text_from_pdf(pdf_file):
     doc = fitz.open(pdf_file)
     text = ""
@@ -44,13 +43,13 @@ def extract_text_from_pdf(pdf_file):
         text += page.get_text("text")
     return text
 
-# Function to answer a question based on PDF content
+#answer a question based on PDF content
 def answer_question(text, question):
     nlp = pipeline("question-answering", model="distilbert-base-cased-distilled-squad", tokenizer="distilbert-base-cased")
     result = nlp(question=question, context=text)
     return result['answer']
 
-# Streamlit UI
+
 def main():
     st.title("PDF Tool with Streamlit")
 
