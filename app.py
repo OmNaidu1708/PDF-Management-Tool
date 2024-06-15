@@ -1,13 +1,12 @@
 import streamlit as st
 import os
 from PyPDF2 import PdfMerger
-from pdf2docx import Converter
 from docx import Document
+from pdf2docx import Converter
 import fitz  # PyMuPDF
-from reportlab.pdfgen import canvas
 from transformers import pipeline
 
-# Merge PDFs
+# Function to merge PDFs
 def merge_pdfs(pdfs):
     merger = PdfMerger()
     for pdf in pdfs:
@@ -17,7 +16,7 @@ def merge_pdfs(pdfs):
     merger.close()
     return output
 
-# Convert PDF to Word
+# Function to convert PDF to Word
 def pdf_to_word(pdf_file):
     output = "converted.docx"
     cv = Converter(pdf_file)
@@ -25,17 +24,19 @@ def pdf_to_word(pdf_file):
     cv.close()
     return output
 
-# Convert Word to PDF
+# Function to convert Word to PDF
 def word_to_pdf(word_file):
-    doc = Document(word_file)
     output = "converted.pdf"
-    pdf = canvas.Canvas(output)
-    for para in doc.paragraphs:
-        pdf.drawString(10, 800, para.text)
-    pdf.save()
+    # Using Document to PDF conversion directly, not requiring external software
+    try:
+        doc = Document(word_file)
+        doc.save(output)
+    except Exception as e:
+        st.error(f"Error converting Word to PDF: {e}")
+        return None
     return output
 
-# Extract text from a PDF
+# Function to extract text from a PDF
 def extract_text_from_pdf(pdf_file):
     doc = fitz.open(pdf_file)
     text = ""
@@ -44,14 +45,14 @@ def extract_text_from_pdf(pdf_file):
         text += page.get_text("text")
     return text
 
-# Answer a question based on PDF content
+# Function to answer a question based on PDF content
 def answer_question(text, question):
     nlp = pipeline("question-answering", model="distilbert-base-cased-distilled-squad", tokenizer="distilbert-base-cased")
     result = nlp(question=question, context=text)
     return result['answer']
 
 def main():
-    st.title("PDF Tool with Streamlit")
+    st.title("PDF Management Tool with Streamlit")
 
     # Merge PDFs section
     st.header("Merge PDFs")
@@ -64,9 +65,12 @@ def main():
                 pdf_paths.append(file_path)
                 with open(file_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
-            merged_pdf = merge_pdfs(pdf_paths)
-            with open(merged_pdf, "rb") as file:
-                st.download_button(label="Download Merged PDF", data=file, file_name=merged_pdf)
+            try:
+                merged_pdf = merge_pdfs(pdf_paths)
+                with open(merged_pdf, "rb") as file:
+                    st.download_button(label="Download Merged PDF", data=file, file_name="merged.pdf")
+            except Exception as e:
+                st.error(f"Error during PDF merge: {e}")
         else:
             st.warning("Please upload PDF files to merge.")
 
@@ -75,11 +79,14 @@ def main():
     pdf_file = st.file_uploader("Upload a PDF to convert to Word", type="pdf")
     if st.button("Convert PDF to Word"):
         if pdf_file:
-            with open("temp_pdf.pdf", "wb") as f:
-                f.write(pdf_file.getbuffer())
-            word_file = pdf_to_word("temp_pdf.pdf")
-            with open(word_file, "rb") as file:
-                st.download_button(label="Download Word Document", data=file, file_name=word_file)
+            try:
+                with open("temp_pdf.pdf", "wb") as f:
+                    f.write(pdf_file.getbuffer())
+                word_file = pdf_to_word("temp_pdf.pdf")
+                with open(word_file, "rb") as file:
+                    st.download_button(label="Download Word Document", data=file, file_name="converted.docx")
+            except Exception as e:
+                st.error(f"Error during PDF to Word conversion: {e}")
         else:
             st.warning("Please upload a PDF file.")
 
@@ -88,11 +95,15 @@ def main():
     word_file = st.file_uploader("Upload a Word document to convert to PDF", type="docx")
     if st.button("Convert Word to PDF"):
         if word_file:
-            with open("temp_word.docx", "wb") as f:
-                f.write(word_file.getbuffer())
-            pdf_file = word_to_pdf("temp_word.docx")
-            with open(pdf_file, "rb") as file:
-                st.download_button(label="Download PDF Document", data=file, file_name=pdf_file)
+            try:
+                with open("temp_word.docx", "wb") as f:
+                    f.write(word_file.getbuffer())
+                pdf_file = word_to_pdf("temp_word.docx")
+                if pdf_file:
+                    with open(pdf_file, "rb") as file:
+                        st.download_button(label="Download PDF Document", data=file, file_name="converted.pdf")
+            except Exception as e:
+                st.error(f"Error during Word to PDF conversion: {e}")
         else:
             st.warning("Please upload a Word file.")
 
@@ -102,11 +113,17 @@ def main():
     question = st.text_input("Enter your question about the PDF content")
     if st.button("Get Answer"):
         if qa_pdf_file and question:
-            with open("qa_temp_pdf.pdf", "wb") as f:
-                f.write(qa_pdf_file.getbuffer())
-            text = extract_text_from_pdf("qa_temp_pdf.pdf")
-            answer = answer_question(text, question)
-            st.write(f"Answer: {answer}")
+            try:
+                with open("qa_temp_pdf.pdf", "wb") as f:
+                    f.write(qa_pdf_file.getbuffer())
+                text = extract_text_from_pdf("qa_temp_pdf.pdf")
+                if text:
+                    answer = answer_question(text, question)
+                    st.write(f"Answer: {answer}")
+                else:
+                    st.warning("Could not extract text from the PDF. Please check the PDF content.")
+            except Exception as e:
+                st.error(f"Error during PDF question answering: {e}")
         else:
             st.warning("Please upload a PDF and enter a question.")
 
