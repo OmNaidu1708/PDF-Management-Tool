@@ -1,12 +1,13 @@
 import streamlit as st
 import os
 from PyPDF2 import PdfMerger
-import fitz
 from docx import Document
 from pdf2docx import Converter
+import fitz
 from transformers import pipeline
+from docx2pdf import convert as docx_to_pdf_convert  # Only for Linux/Unix
 
-#merge PDFs
+# Function to merge PDFs
 def merge_pdfs(pdfs):
     merger = PdfMerger()
     for pdf in pdfs:
@@ -16,7 +17,7 @@ def merge_pdfs(pdfs):
     merger.close()
     return output
 
-#convert PDF to Word
+# Function to convert PDF to Word
 def pdf_to_word(pdf_file):
     output = "converted.docx"
     cv = Converter(pdf_file)
@@ -24,17 +25,28 @@ def pdf_to_word(pdf_file):
     cv.close()
     return output
 
-#Word to PDF
+# Function to convert Word to PDF (Linux/Unix)
 def word_to_pdf(word_file):
-    doc = Document(word_file)
     output = "converted.pdf"
-    c = canvas.Canvas(output)
-    for para in doc.paragraphs:
-        c.drawString(10, 800, para.text)
-    c.save()
+    docx_to_pdf_convert(word_file, output)
     return output
 
-#extract text from a PDF
+# Function to convert Word to PDF (Windows with Microsoft Word)
+# Uncomment and use this function if running on Windows with Microsoft Word
+'''
+import win32com.client
+
+def word_to_pdf(word_file):
+    output = "converted.pdf"
+    word = win32com.client.Dispatch("Word.Application")
+    doc = word.Documents.Open(word_file)
+    doc.SaveAs(output, FileFormat=17)  # 17 is the PDF format
+    doc.Close()
+    word.Quit()
+    return output
+'''
+
+# Function to extract text from a PDF
 def extract_text_from_pdf(pdf_file):
     doc = fitz.open(pdf_file)
     text = ""
@@ -43,12 +55,11 @@ def extract_text_from_pdf(pdf_file):
         text += page.get_text("text")
     return text
 
-#answer a question based on PDF content
+# Function to answer a question based on PDF content
 def answer_question(text, question):
     nlp = pipeline("question-answering", model="distilbert-base-cased-distilled-squad", tokenizer="distilbert-base-cased")
     result = nlp(question=question, context=text)
     return result['answer']
-
 
 def main():
     st.title("PDF Tool with Streamlit")
@@ -66,7 +77,7 @@ def main():
                     f.write(uploaded_file.getbuffer())
             merged_pdf = merge_pdfs(pdf_paths)
             with open(merged_pdf, "rb") as file:
-                st.download_button(label="Download Merged PDF", data=file, file_name=merged_pdf)
+                st.download_button(label="Download Merged PDF", data=file, file_name="merged.pdf")
         else:
             st.warning("Please upload PDF files to merge.")
 
@@ -79,7 +90,7 @@ def main():
                 f.write(pdf_file.getbuffer())
             word_file = pdf_to_word("temp_pdf.pdf")
             with open(word_file, "rb") as file:
-                st.download_button(label="Download Word Document", data=file, file_name=word_file)
+                st.download_button(label="Download Word Document", data=file, file_name="converted.docx")
         else:
             st.warning("Please upload a PDF file.")
 
@@ -92,7 +103,7 @@ def main():
                 f.write(word_file.getbuffer())
             pdf_file = word_to_pdf("temp_word.docx")
             with open(pdf_file, "rb") as file:
-                st.download_button(label="Download PDF Document", data=file, file_name=pdf_file)
+                st.download_button(label="Download PDF Document", data=file, file_name="converted.pdf")
         else:
             st.warning("Please upload a Word file.")
 
