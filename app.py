@@ -5,6 +5,7 @@ from docx import Document
 from pdf2docx import Converter
 import fitz  # PyMuPDF
 from transformers import pipeline
+import subprocess
 
 # Function to merge PDFs
 def merge_pdfs(pdfs):
@@ -24,13 +25,13 @@ def pdf_to_word(pdf_file):
     cv.close()
     return output
 
-# Function to convert Word to PDF
+# Function to convert Word to PDF using docx2pdf
 def word_to_pdf(word_file):
     output = "converted.pdf"
-    # Using Document to PDF conversion directly, not requiring external software
     try:
-        doc = Document(word_file)
-        doc.save(output)
+        # Use docx2pdf for conversion
+        from docx2pdf import convert
+        convert(word_file, output)
     except Exception as e:
         st.error(f"Error converting Word to PDF: {e}")
         return None
