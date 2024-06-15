@@ -1,8 +1,7 @@
-
 streamlit
 PyPDF2
-PyMuPDF
 python-docx
 pdf2docx
+PyMuPDF
 transformers
-reportlab
+docx2pdf
