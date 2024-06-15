@@ -4,4 +4,3 @@ python-docx
 pdf2docx
 PyMuPDF
 transformers
-docx2pdf
