@@ -3,7 +3,7 @@ import os
 from PyPDF2 import PdfMerger
 from docx import Document
 from pdf2docx import Converter
-import fitz  # PyMuPDF
+import fitz 
 from transformers import pipeline
 import subprocess
 
