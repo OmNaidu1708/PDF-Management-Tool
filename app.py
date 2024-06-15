@@ -5,6 +5,7 @@ from docx import Document
 from pdf2docx import Converter
 import fitz
 from transformers import pipeline
+from docx2pdf import convert as docx_to_pdf_convert
 
 # Function to merge PDFs
 def merge_pdfs(pdfs):
@@ -26,12 +27,8 @@ def pdf_to_word(pdf_file):
 
 # Function to convert Word to PDF
 def word_to_pdf(word_file):
-    doc = Document(word_file)
     output = "converted.pdf"
-    c = canvas.Canvas(output)
-    for para in doc.paragraphs:
-        c.drawString(10, 800, para.text)
-    c.save()
+    docx_to_pdf_convert(word_file, output)
     return output
 
 # Function to extract text from a PDF
